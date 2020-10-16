@@ -57,6 +57,32 @@
   <button v-on:click="fetchPosts">Refresh Posts</button>
 </div>
 
+<div id="app-8">
+  <table>
+    <tr>
+      <th>Titre</th>
+      <th>Contenu</th>
+    </tr>
+    <tr v-for="post in posts">
+      <td>{{ post.title }}</td>
+      <td>{{ post.body }}</td>
+    </tr>
+  </table>
+  <button v-on:click="fetchPosts">Refresh Posts</button>
+
+  <form @submit="createPost">
+    <label for="post-title">Titre:</label><br>
+    <input type="text" id="post-title" name="post[title]" v-model="title"><br>
+    <label for="post-body">Contenu:</label><br>
+    <input type="text" id="post-body" name="post[content]" v-model="body"><br><br>
+    <button>Create Post</button>
+  </form>
+  <div>
+    {{ title }}<br/>
+    {{ body }}
+  </div>
+</div>
+
 <script>
   var app = new Vue({
     el: '#app',
@@ -134,6 +160,52 @@
     },
     mounted: function(){
       console.log("ça marche");
+      this.fetchPosts();
+    },
+  });
+
+
+
+  var app8 = new Vue({
+    el: '#app-8',
+    data: {
+      posts: [],
+      title: "",
+      body: "",
+    },
+    methods: {
+      fetchPosts: async function () {
+        var response = await fetch(
+          'http://localhost:3000/posts', {
+            method: 'GET',
+          }
+        );
+        var posts = await response.json();
+        this.posts = posts;
+      },
+      createPost: async function (event) {
+        event.preventDefault();
+
+        var response = await fetch(
+          'http://localhost:3000/posts', {
+            method: 'POST',
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              post: {
+                title: this.title,
+                body: this.body,
+              },
+            }),
+          }
+        );
+        var post = await response.json();
+        this.posts.push(post);
+      },
+    },
+    mounted: function(){
+      console.log("ça marche!");
       this.fetchPosts();
     },
   });
