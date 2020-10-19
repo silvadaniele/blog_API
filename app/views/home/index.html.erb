@@ -66,6 +66,7 @@
     <tr v-for="post in posts">
       <td>{{ post.title }}</td>
       <td>{{ post.body }}</td>
+      <td><button type="button" v-on:click="deletePost(post)">Delete this post</button></td>
     </tr>
   </table>
   <button v-on:click="fetchPosts">Refresh Posts</button>
@@ -82,6 +83,7 @@
     {{ body }}
   </div>
 </div>
+
 
 <script>
   var app = new Vue({
@@ -203,6 +205,16 @@
         var post = await response.json();
         this.posts.push(post);
       },
+      deletePost: async function (post) {
+        var response = await fetch(
+          `http://localhost:3000/posts/${post.id}`, {
+            method: 'DELETE',
+          },
+        )
+        var post = await response.json();
+        var result = this.posts.filter(function(p) {return post.id !== p.id })
+        this.posts = result;
+      },
     },
     mounted: function(){
       console.log("ça marche!");
@@ -210,3 +222,10 @@
     },
   });
 </script>
+
+
+const result = words.filter(word => word.length > 6);
+
+var result = words.filter(function(word) { return word.length > 6 })
+
+var result = this.posts.filter(function(p) {return post.id !== p.id })
