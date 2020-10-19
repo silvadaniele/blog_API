@@ -213,6 +213,12 @@
         )
         var post = await response.json();
         var result = this.posts.filter(function(p) {return post.id !== p.id })
+        // Differences beteen the ancient and the new sintaxe:
+        // NEW: const result = words.filter(word => word.length > 6);
+
+        // ANCIENT: var result = words.filter(function(word) { return word.length > 6 })
+
+        // ADAPTING TO THIS CONTEXT: var result = this.posts.filter(function(p) {return post.id !== p.id })
         this.posts = result;
       },
     },
@@ -222,10 +228,3 @@
     },
   });
 </script>
-
-
-const result = words.filter(word => word.length > 6);
-
-var result = words.filter(function(word) { return word.length > 6 })
-
-var result = this.posts.filter(function(p) {return post.id !== p.id })
