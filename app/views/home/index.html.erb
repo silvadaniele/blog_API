@@ -68,7 +68,7 @@
 
       <template v-if='post.editing'>
         <td><input type="text" id="post-title" name="post[title]" v-model="title"></td>
-        <td><input type="text" id="post-body" name="post[content]" v-model="body"></td>
+        <td><input type="textarea" id="post-body" name="post[content]" v-model="body"></td>
         <td><button type="button" v-on:click="updatePost(post)">Save editions</button></td>
       </template>
       <template v-else>
@@ -194,8 +194,8 @@
             method: 'GET',
           }
         );
-        var posts = await response.json();
-        this.posts = posts;
+        var refreshedPosts = await response.json();
+        this.posts = refreshedPosts;
       },
       createPost: async function (event) {
         event.preventDefault();
@@ -214,29 +214,50 @@
             }),
           }
         );
-        var post = await response.json();
-        this.posts.push(post);
+        var createdPost = await response.json();
+        this.posts.push(createdPost);
       },
 
-      editPost: async function (post) {
-        post.editing = true;
-        var result = this.posts.map(function(p) {
-          if (post.id === p.id) {
-            return post;
+      editPost: async function (postToEdit) {
+        postToEdit.editing = true;
+        var refreshedPosts = this.posts.map(function(p) {
+          if (postToEdit.id === p.id) {
+            return postToEdit;
+          } else {
+            p.editing = false;
+            return p;
+          }
+        });
+        this.title = postToEdit.title;
+        this.body = postToEdit.body;
+        this.posts = refreshedPosts;
+      },
+      updatePost: async function (postToUpdate) {
+        var response = await fetch(
+          `http://localhost:3000/posts/${postToUpdate.id}`, {
+            method: 'PATCH',
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              post: {
+                title: this.title,
+                body: this.body,
+              },
+            }),
+          },
+        );
+
+        var updatedPost = await response.json();
+
+        var refreshedPosts = this.posts.map(function(p) {
+          if (updatedPost.id === p.id) {
+            return updatedPost;
           } else {
             return p;
           }
         });
-        this.posts = result;
-      },
-      updatePost: async function (post) {
-        var response = await fetch(
-          `http://localhost:3000/posts/${post.id}`, {
-            method: 'PATCH',
-          },
-        );
-        var post = await response.json();
-        var result = this.post(post.editing);
+        this.posts = refreshedPosts;
       },
       deletePost: async function (post) {
         var response = await fetch(
