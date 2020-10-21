@@ -64,9 +64,21 @@
       <th>Contenu</th>
     </tr>
     <tr v-for="post in posts">
-      <td>{{ post.title }}</td>
-      <td>{{ post.body }}</td>
-      <td><button type="button" v-on:click="deletePost(post)">Delete this post</button></td>
+
+
+      <template v-if='post.editing'>
+        <td><input type="text" id="post-title" name="post[title]" v-model="title"></td>
+        <td><input type="textarea" id="post-body" name="post[content]" v-model="body"></td>
+        <td><button type="button" v-on:click="updatePost(post)">Save editions</button></td>
+      </template>
+      <template v-else>
+        <td>{{ post.title }}</td>
+        <td>{{ post.body }}</td>
+        <td><button type="button" v-on:click="editPost(post)">Edit this post</button></td>
+      </template>
+      <td>
+        <button type="button" v-on:click="deletePost(post)">Delete this post</button>
+       </td>
     </tr>
   </table>
   <button v-on:click="fetchPosts">Refresh Posts</button>
@@ -182,8 +194,8 @@
             method: 'GET',
           }
         );
-        var posts = await response.json();
-        this.posts = posts;
+        var refreshedPosts = await response.json();
+        this.posts = refreshedPosts;
       },
       createPost: async function (event) {
         event.preventDefault();
@@ -202,17 +214,65 @@
             }),
           }
         );
-        var post = await response.json();
-        this.posts.push(post);
+        var createdPost = await response.json();
+        this.posts.push(createdPost);
+      },
+
+      editPost: async function (postToEdit) {
+        postToEdit.editing = true;
+        var refreshedPosts = this.posts.map(function(p) {
+          if (postToEdit.id === p.id) {
+            return postToEdit;
+          } else {
+            p.editing = false;
+            return p;
+          }
+        });
+        this.title = postToEdit.title;
+        this.body = postToEdit.body;
+        this.posts = refreshedPosts;
+      },
+      updatePost: async function (postToUpdate) {
+        var response = await fetch(
+          `http://localhost:3000/posts/${postToUpdate.id}`, {
+            method: 'PATCH',
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              post: {
+                title: this.title,
+                body: this.body,
+              },
+            }),
+          },
+        );
+
+        var updatedPost = await response.json();
+
+        var refreshedPosts = this.posts.map(function(p) {
+          if (updatedPost.id === p.id) {
+            return updatedPost;
+          } else {
+            return p;
+          }
+        });
+        this.posts = refreshedPosts;
       },
       deletePost: async function (post) {
         var response = await fetch(
           `http://localhost:3000/posts/${post.id}`, {
             method: 'DELETE',
           },
-        )
+        );
         var post = await response.json();
         var result = this.posts.filter(function(p) {return post.id !== p.id })
+        // Differences beteen the ancient and the new sintaxe:
+        // NEW: const result = words.filter(word => word.length > 6);
+
+        // ANCIENT: var result = words.filter(function(word) { return word.length > 6 })
+
+        // ADAPTING TO THIS CONTEXT: var result = this.posts.filter(function(p) {return post.id !== p.id })
         this.posts = result;
       },
     },
@@ -222,10 +282,3 @@
     },
   });
 </script>
-
-
-const result = words.filter(word => word.length > 6);
-
-var result = words.filter(function(word) { return word.length > 6 })
-
-var result = this.posts.filter(function(p) {return post.id !== p.id })
